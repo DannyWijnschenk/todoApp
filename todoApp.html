@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>ToDo App</title>
+    <link rel="stylesheet" type="text/css" href="nglib/bootstrap/css/bootstrap.min.css" />
+  </head>
+ 
+<body>
+  <div ng-app="ToDoApp">
+    <div ng-controller="ToDoController">
+	  <div class="col-md-8">
+        <div class="panel panel-default">
+          <div class="panel-heading">{{todos.length}} ToDos &nbsp;<input type="text" size=80 ng-model="inputNew.description" my-enter="newToDo(inputNew.description)"/>    	
+          </div>
+          <div class="panel-body">  
+            <table class="table table-hover">
+              <thead>
+                <th>Description</th>
+                <th>Active</th>
+              </thead>
+              <tr ng-repeat="todo in todos" ng-class="{'info':$index === selectedRow, 'danger':!todo.Active}">  
+                <td ng-show="$index !== selectedRow" ng-click="selectToDo($index);">{{todo.Description}}</td>
+                <td ng-show="$index === selectedRow">
+                  <input type="text" size=80 ng-model="todo.Description" my-enter="saveToDo(todo)" ng-blur="saveToDo(todo)"/>
+                </td>
+                <td ng-show="todo.Active" ng-click="toggleActive(todo);"><span class="glyphicon glyphicon-ok"></span></td>
+                <td ng-show="!todo.Active" ng-click="toggleActive(todo);"><span class="glyphicon glyphicon-ban-circle"></span></td>
+                <td ng-click="deleteToDo(todo, $index);"><a class="icon-link"><span class="glyphicon glyphicon-remove"></span></a></td>             
+              </tr>
+	        </table>
+          </div> <!--panel body -->
+        </div>  <!--panel default -->
+      </div>  <!--col-md-8-->
+    </div> <!--controller-->
+  </div> <!--ToDoApp-->	
+
+  <script type="text/javascript" src="nglib/jquery-1.9.0.min.js"></script>
+  <script type="text/javascript" src="nglib/angular.min.js"></script>
+  <script type="text/javascript" src="nglib/bootstrap/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="nglib/angular-resource.min.js"></script>
+  <script type="text/javascript" src="ToDoApp.js"></script>
+</body>
+</html>

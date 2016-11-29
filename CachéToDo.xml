@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2016.1 (Build 656U)" ts="2016-11-29 15:28:32">
+<Class name="App.RestHandler">
+<Super>%CSP.REST</Super>
+<TimeChanged>64243,37094.848372</TimeChanged>
+<TimeCreated>64241,77765.589552</TimeCreated>
+
+<Parameter name="HandleCorsRequest">
+<Expression>1</Expression>
+</Parameter>
+
+<XData name="UrlMap">
+<Data><![CDATA[
+<Routes>
+<Route Url="/api/todo" Method="GET" Call="GetToDo"/>
+<Route Url="/api/todo/:id" Method="GET" Call="GetToDo"/>
+<Route Url="/api/todo" Method="POST" Call="SaveToDo"/>
+<Route Url="/api/todo/:id" Method="POST" Call="SaveToDo"/>
+<Route Url="/api/todo/:id" Method="DELETE" Call="DeleteToDo"/>
+</Routes>
+]]></Data>
+</XData>
+
+<Method name="GetToDo">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>id:%Integer=""</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	#Dim sql as %String
+	#Dim e as %Exception.AbstractException
+	#Dim status as %Status
+	Try {
+		Set sql="Select * From Data.ToDo"
+		If id'="" Set sql=sql_" Where ID = "_id
+		If $Data(%response) Set %response.ContentType="application/json"
+		Do ##class(%ZEN.Auxiliary.jsonSQLProvider).%WriteJSONFromSQL(,sql,"tuw",10000)	
+    } Catch (e) {
+        Set status=e.AsStatus()
+        Do ..ErrorHandler(status)
+    }    
+    Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="SaveToDo">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>id:%Integer=""</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	#dim objToDo as Data.ToDo
+	Try {
+	    #dim tSC As %Status = $$$OK
+	  	set objStream=%request.Content
+		set line = ""
+		While 'objStream.AtEnd {
+			Set line = line _ objStream.ReadLine()
+		}
+		;2015.2
+		set stat = ##class(%ZEN.Auxiliary.jsonProvider).%ConvertJSONToObject(line,,.pObject)
+		;debug
+		;open "dump.txt":"wns" use "dump.txt" w !,line,! do $system.OBJ.Dump(pObject) Close "dump.txt" use 0
+		Set objToDo=##class(Data.ToDo).%OpenId(id)
+		If '$IsObject(objToDo) {
+			Set objToDo = ##class(Data.ToDo).%New()
+		}
+		Set objToDo.Description = $ZCVT(pObject.Description,"I","UTF8")
+		Set objToDo.Active = $Select(pObject.Active:1, 1:0)
+		Set sc = objToDo.%Save()
+		Write "{ ""id"" : """_objToDo.%Id()_""" }",!
+    } Catch (e) {
+        Set status=e.AsStatus()
+        Do ..ErrorHandler(status)
+	}
+	Quit tSC
+]]></Implementation>
+</Method>
+
+<Method name="DeleteToDo">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>id:%Integer</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	#Dim e as %Exception.AbstractException
+	#Dim status as %Status
+	Try {
+		If $Data(id) Do ##class(Data.ToDo).%DeleteId(id)
+		If $Data(%response) Set %response.ContentType="application/json"
+		Write "{ ""id"" : """_id_""" }",!
+    } Catch (e) {
+        Set status=e.AsStatus()
+        Do ..ErrorHandler(status)
+    }    
+    Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="ErrorHandler">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>status</FormalSpec>
+<Implementation><![CDATA[
+	#Dim errorcode, errormessage as %String;
+	set errorcode=$piece(##class(%SYSTEM.Status).GetErrorCodes(status),",")
+	set errormessage=##class(%SYSTEM.Status).GetOneStatusText(status)
+	Quit ..ErrorHandlerCode(errorcode,errormessage)
+]]></Implementation>
+</Method>
+
+<Method name="ErrorHandlerCode">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>errorcode,errormessage</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Write "{"
+	Write " ""ErrorNum"" : """,errorcode,""","
+	Write " ""ErrorMessage"" : """,errormessage,""""
+	write "}"
+
+	If $Data(%response) {
+		Set %response.ContentType="application/json"
+	}
+	quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+
+
+<Class name="Data.ToDo">
+<Super>%Persistent</Super>
+<TimeChanged>64241,78039.107624</TimeChanged>
+<TimeCreated>64241,78038.959426</TimeCreated>
+
+<Property name="Description">
+<Type>%String</Type>
+<Parameter name="MAXLEN"/>
+</Property>
+
+<Property name="Active">
+<Type>%Boolean</Type>
+</Property>
+
+<Storage name="Default">
+<Type>%Library.CacheStorage</Type>
+<DataLocation>^Data.ToDoD</DataLocation>
+<DefaultData>ToDoDefaultData</DefaultData>
+<IdLocation>^Data.ToDoD</IdLocation>
+<IndexLocation>^Data.ToDoI</IndexLocation>
+<StreamLocation>^Data.ToDoS</StreamLocation>
+<Data name="ToDoDefaultData">
+<Structure>listnode</Structure>
+<Subscript/>
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>Description</Value>
+</Value>
+<Value name="3">
+<Value>Active</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+</Export>
